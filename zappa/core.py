@@ -1614,6 +1614,12 @@ class Zappa:
             Attributes=[{"Key": "idle_timeout.timeout_seconds", "Value": str(timeout)}],
         )
 
+        # Wait for lambda to become active, otherwise registering target will fail
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda.html#waiters
+        kwargs = dict(FunctionName="{}:{}".format(lambda_arn, ALB_LAMBDA_ALIAS))
+        waiter = self.lambda_client.get_waiter("function_active")
+        waiter.wait(**kwargs)
+
         # Create/associate target group.
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_target_group
         kwargs = dict(
